@@ -10,6 +10,69 @@ HERTZ = 1
 SECONDS = 0
 
 
+def addSensor(server, auth_token, device_id, sensor_name, sensor_type="", sensor_label="", sensor_desc=""):
+	"""
+	Add a sensor to the device. type, label, and description are optional.
+	"""
+	
+	conn = httplib.HTTPSConnection(server)
+
+	url="/SensorCloud/devices/%s/sensors/%s/?version=1&auth_token=%s"%(device_id, sensor_name, auth_token)
+	
+	headers = {"Content-type" : "application/xdr"}
+	
+	#addSensor allows you to set the sensor type label and description.  All fileds are strings.
+	#we need to pack these strings into an xdr structure
+	packer = xdrlib.Packer()
+	packer.pack_int(1)  #version 1
+	packer.pack_string(sensor_type)
+	packer.pack_string(sensor_label)
+	packer.pack_string(sensor_desc)
+	data = packer.get_buffer()
+	
+	print "adding sensor..."
+	conn.request('PUT', url=url, body=data, headers=headers)
+	response =conn.getresponse()
+	print response.status , response.reason
+	
+	#if response is 201 created then we know the sensor was added
+	if response.status is httplib.CREATED: 
+		print "Sensor added"
+	else:
+		print "Error adding sensor. Error:", response.read()
+
+
+
+def addChannel(server, auth_token, device_id, sensor_name, channel_name, channel_label="", channel_desc=""):
+	"""
+	Add a channel to the sensor.  label and description are optional.
+	"""
+
+	conn = httplib.HTTPSConnection(server)
+
+	url="/SensorCloud/devices/%s/sensors/%s/channels/%s/?version=1&auth_token=%s"%(device_id, sensor_name, channel_name, auth_token)
+	
+	headers = {"Content-type" : "application/xdr"}
+	
+	#addChannel allows you to set the channel label and description.  All fileds are strings.
+	#we need to pack these strings into an xdr structure
+	packer = xdrlib.Packer()
+	packer.pack_int(1)  #version 1
+	packer.pack_string(channel_label)
+	packer.pack_string(channel_desc)
+	data = packer.get_buffer()
+	
+	print "adding sensor..."
+	conn.request('PUT', url=url, body=data, headers=headers)
+	response =conn.getresponse()
+	print response.status , response.reason
+	
+	#if response is 201 created then we know the channel was added
+	if response.status is httplib.CREATED: 
+		print "Channel successfuly added"
+	else:
+		print "Error adding channel.  Error:", response.read()
+	
 
 def uploadSinWave(server, auth_token, device_id, sensor_name, channel_name):
  	"""
@@ -158,7 +221,7 @@ if __name__ == "__main__":
 	
 	#first autheticate using the open api device serial and it's coresponding key
 	#autheticate will return the server and an auth_token for all subsequent reguests
-	server, auth_token = datatransfer.authenticate_key(device_id, key)
+	server, auth_token = authenticate_key(device_id, key)
 	#alternate method, uncomment to use
 	#server, auth_token = authenticate_alternate(device_id, username, password)
 	
